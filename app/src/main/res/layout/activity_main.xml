@@ -132,4 +132,25 @@
         android:textColor="@android:color/white"
         android:textSize="18sp"/>
 
+    <ImageView
+        android:id="@+id/refreshImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/iconImageView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="5dp"
+        app:srcCompat="@drawable/refresh"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/iconImageView"
+        android:layout_centerHorizontal="true"
+        android:layout_alignBottom="@id/refreshImageView"
+        android:layout_alignTop="@id/refreshImageView"
+        android:layout_alignLeft="@id/refreshImageView"
+        android:layout_alignRight="@id/refreshImageView"/>
+
 </RelativeLayout>

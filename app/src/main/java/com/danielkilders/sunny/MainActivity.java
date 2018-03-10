@@ -8,7 +8,9 @@ import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,8 +37,9 @@ public class MainActivity extends AppCompatActivity {
     private CurrentWeather mCurrentWeather;
 
     //Views
-    private TextView mTemperatureLabel, mTimeLabel, mHumidityLabel, mPrecipLabel, mSummaryLabel;
-    private ImageView mIconImageView;
+    private TextView mTemperatureLabel, mTimeLabel, mHumidityLabel, mPrecipLabel, mSummaryLabel, mLocationLabel;
+    private ImageView mIconImageView, mRefreshImageView;
+    private ProgressBar mProgressBar;
 
 
     @Override
@@ -50,8 +53,29 @@ public class MainActivity extends AppCompatActivity {
         mPrecipLabel = findViewById(R.id.precipLabel);
         mSummaryLabel = findViewById(R.id.summaryLabel);
         mIconImageView = findViewById(R.id.iconImageView);
+        mRefreshImageView = findViewById(R.id.refreshImageView);
+        mProgressBar = findViewById(R.id.progressBar);
+        mLocationLabel = findViewById(R.id.locationLabel);
 
+        mProgressBar.setVisibility(View.INVISIBLE);
+
+        mRefreshImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getForecast();
+            }
+        });
+
+        getForecast();
+    }
+
+    /*
+     * Connect to dark sky api, retrieve data, updateUI
+     */
+    private void getForecast() {
         if (isNetworkAvailable()) {
+            toggleRefresh();
+
             OkHttpClient client = new OkHttpClient();
             Request request = new Request.Builder()
                     .url(forecastURL)
@@ -63,11 +87,25 @@ public class MainActivity extends AppCompatActivity {
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            toggleRefresh();
+                        }
+                    });
 
+                    alertUserAboutError();
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            toggleRefresh();
+                        }
+                    });
+
                     try {
                         String jsonData = response.body().string();
                         Log.v(TAG, jsonData);
@@ -100,12 +138,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /*
+     * Toggle visibility of progressbar and refresh button
+     */
+    private void toggleRefresh() {
+        if (mProgressBar.getVisibility() == View.INVISIBLE) {
+            mProgressBar.setVisibility(View.VISIBLE);
+            mRefreshImageView.setVisibility(View.INVISIBLE);
+        } else {
+            mProgressBar.setVisibility(View.INVISIBLE);
+            mRefreshImageView.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    /*
      * Use CurrentWeather object to update UI with most up-to-date values
      */
     private void updateDisplay() {
         mTemperatureLabel.setText(mCurrentWeather.getTemperature() + "");
         mTimeLabel.setText("At " + mCurrentWeather.getFormattedTime() + " it will be");
-        mHumidityLabel.setText(mCurrentWeather.getHumidity() + "");
+        mHumidityLabel.setText(mCurrentWeather.getHumidity() + "%");
         mPrecipLabel.setText(mCurrentWeather.getPrecipChance() + "%");
         mSummaryLabel.setText(mCurrentWeather.getSummary());
 
