@@ -6,6 +6,7 @@ import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -29,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
     private String forecastURL = "https://api.darksky.net/forecast/" + KEY + "/" + latitude + "," + longitude;
 
     private CurrentWeather mCurrentWeather;
+
+    //Views
+    private TextView mTemperatureLabel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
