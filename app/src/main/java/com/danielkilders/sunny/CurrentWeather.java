@@ -79,7 +79,7 @@ public class CurrentWeather {
 
     public String getFormattedTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
-        formatter.setTimeZone(TimeZone.getTimeZone(getTimeZone()));
+        //formatter.setTimeZone(TimeZone.getTimeZone(getTimeZone()));
         Date dateTime = new Date(getTime() * 1000); // convert seconds to milliseconds
         String timeString = formatter.format(dateTime);
 
@@ -87,7 +87,7 @@ public class CurrentWeather {
     }
 
     public double getTemperature() {
-        return mTemperature;
+        return (int) Math.round(mTemperature);
     }
 
     public void setTemperature(double temperature) {
@@ -103,7 +103,7 @@ public class CurrentWeather {
     }
 
     public double getPrecipChance() {
-        return mPrecipChance;
+        return (int)Math.round(mPrecipChance * 100); // *100 to make it a percentage
     }
 
     public void setPrecipChance(double precipChance) {

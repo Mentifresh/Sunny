@@ -1,11 +1,14 @@
 package com.danielkilders.sunny;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,12 +35,21 @@ public class MainActivity extends AppCompatActivity {
     private CurrentWeather mCurrentWeather;
 
     //Views
-    private TextView mTemperatureLabel;
+    private TextView mTemperatureLabel, mTimeLabel, mHumidityLabel, mPrecipLabel, mSummaryLabel;
+    private ImageView mIconImageView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mTemperatureLabel = findViewById(R.id.temperatureLabel);
+        mTimeLabel = findViewById(R.id.timeLabel);
+        mHumidityLabel = findViewById(R.id.humidityLabel);
+        mPrecipLabel = findViewById(R.id.precipLabel);
+        mSummaryLabel = findViewById(R.id.summaryLabel);
+        mIconImageView = findViewById(R.id.iconImageView);
 
         if (isNetworkAvailable()) {
             OkHttpClient client = new OkHttpClient();
@@ -47,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
             Call call = client.newCall(request);
 
-            // make sure it's asynchronous
+            // handle request asynchronously
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
@@ -61,7 +73,15 @@ public class MainActivity extends AppCompatActivity {
                         Log.v(TAG, jsonData);
 
                         if (response.isSuccessful()) {
-                            mCurrentWeather = gerCurrentDetails(jsonData);
+                            mCurrentWeather = getCurrentDetails(jsonData);
+
+                            // Run this in the main thread
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateDisplay();
+                                }
+                            });
                         } else {
                             alertUserAboutError();
                         }
@@ -79,23 +99,44 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private CurrentWeather gerCurrentDetails(String jsonData) throws JSONException {
+    /*
+     * Use CurrentWeather object to update UI with most up-to-date values
+     */
+    private void updateDisplay() {
+        mTemperatureLabel.setText(mCurrentWeather.getTemperature() + "");
+        mTimeLabel.setText("At " + mCurrentWeather.getFormattedTime() + " it will be");
+        mHumidityLabel.setText(mCurrentWeather.getHumidity() + "");
+        mPrecipLabel.setText(mCurrentWeather.getPrecipChance() + "%");
+        mSummaryLabel.setText(mCurrentWeather.getSummary());
+
+        Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
+        mIconImageView.setImageDrawable(drawable);
+
+    }
+
+    /*
+     * Use JSON to create a CurrentWeather object, fill it with required information and return it
+     */
+    private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
         JSONObject forecast = new JSONObject(jsonData);
         String timezone = forecast.getString("timezone");
         JSONObject currently = forecast.getJSONObject("currently");
 
-        CurrentWeather currentWeather = new CurrentWeather();
-        currentWeather.setHumidity(currently.getDouble("humidity"));
-        currentWeather.setTime(currently.getLong("time"));
-        currentWeather.setIcon(currently.getString("icon"));
-        currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-        currentWeather.setSummary(currently.getString("summary"));
-        currentWeather.setTemperature(currently.getDouble("temperature"));
-        currentWeather.setTimeZone(timezone);
+        mCurrentWeather = new CurrentWeather();
+        mCurrentWeather.setHumidity(currently.getDouble("humidity"));
+        mCurrentWeather.setTime(currently.getLong("time"));
+        mCurrentWeather.setIcon(currently.getString("icon"));
+        mCurrentWeather.setPrecipChance(currently.getDouble("precipProbability"));
+        mCurrentWeather.setSummary(currently.getString("summary"));
+        mCurrentWeather.setTemperature(currently.getDouble("temperature"));
+        mCurrentWeather.setTimeZone(timezone);
 
-        return currentWeather;
+        return mCurrentWeather;
     }
 
+    /*
+     * Check if the phone has internet connection
+     */
     private boolean isNetworkAvailable() {
         boolean isAvailable = false;
 
@@ -109,6 +150,9 @@ public class MainActivity extends AppCompatActivity {
         return isAvailable;
     }
 
+    /*
+     * Inform user about connection issue
+     */
     private void alertUserAboutError() {
         AlertDialogFragment dialog = new AlertDialogFragment();
         dialog.show(getFragmentManager(), "error_dialog");
