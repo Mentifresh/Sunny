@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 
 import okhttp3.Call;
@@ -24,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private double latitude =  37.8267;
     private double longitude = -122.4233;
     private String forecastURL = "https://api.darksky.net/forecast/" + KEY + "/" + latitude + "," + longitude;
+
+    private CurrentWeather mCurrentWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,13 +53,18 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     try {
-                        Log.v(TAG, response.body().string());
-                        if (response.isSuccessful()) {
+                        String jsonData = response.body().string();
+                        Log.v(TAG, jsonData);
 
+                        if (response.isSuccessful()) {
+                            mCurrentWeather = gerCurrentDetails(jsonData);
                         } else {
                             alertUserAboutError();
                         }
                     } catch (IOException e) {
+                        Log.e(TAG, "Exception caught: ", e);
+                    }
+                    catch (JSONException e) {
                         Log.e(TAG, "Exception caught: ", e);
                     }
                 }
@@ -63,6 +73,23 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Network unavailable :(", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private CurrentWeather gerCurrentDetails(String jsonData) throws JSONException {
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+        JSONObject currently = forecast.getJSONObject("currently");
+
+        CurrentWeather currentWeather = new CurrentWeather();
+        currentWeather.setHumidity(currently.getDouble("humidity"));
+        currentWeather.setTime(currently.getLong("time"));
+        currentWeather.setIcon(currently.getString("icon"));
+        currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
+        currentWeather.setSummary(currently.getString("summary"));
+        currentWeather.setTemperature(currently.getDouble("temperature"));
+        currentWeather.setTimeZone(timezone);
+
+        return currentWeather;
     }
 
     private boolean isNetworkAvailable() {
