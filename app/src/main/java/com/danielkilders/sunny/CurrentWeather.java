@@ -79,7 +79,7 @@ public class CurrentWeather {
 
     public String getFormattedTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
-        //formatter.setTimeZone(TimeZone.getTimeZone(getTimeZone()));
+        formatter.setTimeZone(TimeZone.getTimeZone(getTimeZone()));
         Date dateTime = new Date(getTime() * 1000); // convert seconds to milliseconds
         String timeString = formatter.format(dateTime);
 

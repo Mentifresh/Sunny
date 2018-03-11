@@ -1,10 +1,16 @@
 package com.danielkilders.sunny;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,11 +36,15 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String KEY = "8c490071fb00c1ea4c867e0b58cbefac";
 
-    private double latitude =  37.8267;
-    private double longitude = -122.4233;
-    private String forecastURL = "https://api.darksky.net/forecast/" + KEY + "/" + latitude + "," + longitude;
+    private double latitude;
+    private double longitude;
 
     private CurrentWeather mCurrentWeather;
+    private LocationListener mLocationListener;
+    private LocationManager mLocationManager;
+
+    // TODO: make app prettier
+    // TODO: Toggle Fahrenheit and Celcius degrees
 
     //Views
     private TextView mTemperatureLabel, mTimeLabel, mHumidityLabel, mPrecipLabel, mSummaryLabel, mLocationLabel;
@@ -59,20 +69,77 @@ public class MainActivity extends AppCompatActivity {
 
         mProgressBar.setVisibility(View.INVISIBLE);
 
+        boolean permissionsGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ;
+
+        if (permissionsGranted) {
+            getLocation();
+            getForecast(latitude, longitude);
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 200);
+        }
+
         mRefreshImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getForecast();
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    getLocation();
+                }
             }
         });
+    }
 
-        getForecast();
+    /*
+     * Get current location of the user
+     */
+    private void getLocation() {
+        Log.v(TAG, "retrieving location");
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 200);
+            return;
+        }
+        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        //Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        //longitude = location.getLongitude();
+        //latitude = location.getLatitude();
+        Log.v(TAG, "longitude: " + longitude);
+        Log.v(TAG, "latitude: " + latitude);
+
+        mLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                longitude = location.getLongitude();
+                latitude = location.getLatitude();
+                getForecast(latitude, longitude);
+            }
+
+            @Override
+            public void onStatusChanged(String s, int i, Bundle bundle) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String s) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String s) {
+
+            }
+        };
+
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
+                0, mLocationListener);
     }
 
     /*
      * Connect to dark sky api, retrieve data, updateUI
      */
-    private void getForecast() {
+    private void getForecast(Double latitude, Double longitude) {
+        String forecastURL = "https://api.darksky.net/forecast/" + KEY + "/" + latitude + "," + longitude;
+
         if (isNetworkAvailable()) {
             toggleRefresh();
 
@@ -160,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
         mHumidityLabel.setText(mCurrentWeather.getHumidity() + "%");
         mPrecipLabel.setText(mCurrentWeather.getPrecipChance() + "%");
         mSummaryLabel.setText(mCurrentWeather.getSummary());
+        mLocationLabel.setText("At your location");
 
         Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
         mIconImageView.setImageDrawable(drawable);
