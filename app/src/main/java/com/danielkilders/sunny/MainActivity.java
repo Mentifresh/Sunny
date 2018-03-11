@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -24,6 +26,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
     private double latitude;
     private double longitude;
+    private String cityName = "At your location";
 
     private CurrentWeather mCurrentWeather;
     private LocationListener mLocationListener;
@@ -111,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
             public void onLocationChanged(Location location) {
                 longitude = location.getLongitude();
                 latitude = location.getLatitude();
+                getCity(latitude, longitude);
                 getForecast(latitude, longitude);
             }
 
@@ -135,9 +141,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /*
+     * Get current city of the user using latitude and longitude
+     */
+    private String getCity(double latitude, double longitude) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        List<Address> addresses = null;
+        try {
+            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            cityName = addresses.get(0).getAddressLine(1);
+
+            // replace all digits with empty string -> originally returned string also return zip code
+            cityName = cityName.replaceAll("\\d","");
+
+            Log.v(TAG, "Retrieved city name: " + cityName);
+        } catch (IOException e) {
+            Log.v(TAG, "Error getting city name", e);
+            cityName = "At your location";
+        }
+
+        return cityName;
+    }
+
+    /*
      * Connect to dark sky api, retrieve data, updateUI
      */
-    private void getForecast(Double latitude, Double longitude) {
+    private void getForecast(double latitude, double longitude) {
         String forecastURL = "https://api.darksky.net/forecast/" + KEY + "/" + latitude + "," + longitude;
 
         if (isNetworkAvailable()) {
@@ -227,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
         mHumidityLabel.setText(mCurrentWeather.getHumidity() + "%");
         mPrecipLabel.setText(mCurrentWeather.getPrecipChance() + "%");
         mSummaryLabel.setText(mCurrentWeather.getSummary());
-        mLocationLabel.setText("At your location");
+        mLocationLabel.setText(cityName);
 
         Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
         mIconImageView.setImageDrawable(drawable);
