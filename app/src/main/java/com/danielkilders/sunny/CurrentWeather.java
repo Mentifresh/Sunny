@@ -90,6 +90,11 @@ public class CurrentWeather {
         return (int) Math.round(mTemperature);
     }
 
+    public int getCelsiusTemperature() {
+        double celsiusTemperature = ((mTemperature - 32)*5)/9;
+        return (int) Math.round(celsiusTemperature);
+    }
+
     public void setTemperature(double temperature) {
         mTemperature = temperature;
     }
