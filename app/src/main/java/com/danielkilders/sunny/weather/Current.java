@@ -1,10 +1,12 @@
-package com.danielkilders.sunny;
+package com.danielkilders.sunny.weather;
+
+import com.danielkilders.sunny.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class CurrentWeather {
+public class Current {
     private String mIcon;
     private long mTime;
     private double mTemperature;

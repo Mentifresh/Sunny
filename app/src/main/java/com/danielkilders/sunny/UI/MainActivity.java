@@ -1,4 +1,4 @@
-package com.danielkilders.sunny;
+package com.danielkilders.sunny.UI;
 
 import android.Manifest;
 import android.content.Context;
@@ -9,7 +9,6 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.ActivityCompat;
@@ -21,6 +20,10 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.danielkilders.sunny.R;
+import com.danielkilders.sunny.weather.Current;
+import com.danielkilders.sunny.weather.Forecast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String cityName = "At your location";
     private Boolean useCelsius = true;
 
-    private CurrentWeather mCurrentWeather;
+    private Forecast mForecast;
     private LocationListener mLocationListener;
     private LocationManager mLocationManager;
 
@@ -179,6 +182,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         return cityName;
     }
 
+    private Forecast parseForecastDetails(String jsonData) throws JSONException {
+        Forecast forecast = new Forecast();
+
+        forecast.setCurrent(getCurrentDetails(jsonData));
+
+        return forecast;
+    }
+
+
     /*
      * Connect to dark sky api, retrieve data, updateUI
      */
@@ -223,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                         Log.v(TAG, jsonData);
 
                         if (response.isSuccessful()) {
-                            mCurrentWeather = getCurrentDetails(jsonData);
+                            mForecast = parseForecastDetails(jsonData);
 
                             // Run this in the main thread
                             runOnUiThread(new Runnable() {
@@ -264,42 +276,43 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     /*
-     * Use CurrentWeather object to update UI with most up-to-date values
+     * Use Current object to update UI with most up-to-date values
      */
     private void updateDisplay() {
-        mTemperatureLabel.setText(mCurrentWeather.getTemperature() + "");
+        Current current = mForecast.getCurrent();
+        mTemperatureLabel.setText(current.getTemperature() + "");
         if (useCelsius) {
-            mTemperatureLabel.setText(mCurrentWeather.getCelsiusTemperature() + "");
+            mTemperatureLabel.setText(current.getCelsiusTemperature() + "");
         }
-        mTimeLabel.setText("At " + mCurrentWeather.getFormattedTime() + " it will be");
-        mHumidityLabel.setText(mCurrentWeather.getHumidity() + "%");
-        mPrecipLabel.setText(mCurrentWeather.getPrecipChance() + "%");
-        mSummaryLabel.setText(mCurrentWeather.getSummary());
+        mTimeLabel.setText("At " + current.getFormattedTime() + " it will be");
+        mHumidityLabel.setText(current.getHumidity() + "%");
+        mPrecipLabel.setText(current.getPrecipChance() + "%");
+        mSummaryLabel.setText(current.getSummary());
         mLocationLabel.setText(cityName);
 
-        Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
+        Drawable drawable = getResources().getDrawable(current.getIconId());
         mIconImageView.setImageDrawable(drawable);
 
     }
 
     /*
-     * Use JSON to create a CurrentWeather object, fill it with required information and return it
+     * Use JSON to create a Current object, fill it with required information and return it
      */
-    private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+    private Current getCurrentDetails(String jsonData) throws JSONException {
         JSONObject forecast = new JSONObject(jsonData);
         String timezone = forecast.getString("timezone");
         JSONObject currently = forecast.getJSONObject("currently");
 
-        mCurrentWeather = new CurrentWeather();
-        mCurrentWeather.setHumidity(currently.getDouble("humidity"));
-        mCurrentWeather.setTime(currently.getLong("time"));
-        mCurrentWeather.setIcon(currently.getString("icon"));
-        mCurrentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-        mCurrentWeather.setSummary(currently.getString("summary"));
-        mCurrentWeather.setTemperature(currently.getDouble("temperature"));
-        mCurrentWeather.setTimeZone(timezone);
+        Current current = new Current();
+        current.setHumidity(currently.getDouble("humidity"));
+        current.setTime(currently.getLong("time"));
+        current.setIcon(currently.getString("icon"));
+        current.setPrecipChance(currently.getDouble("precipProbability"));
+        current.setSummary(currently.getString("summary"));
+        current.setTemperature(currently.getDouble("temperature"));
+        current.setTimeZone(timezone);
 
-        return mCurrentWeather;
+        return current;
     }
 
     /*
