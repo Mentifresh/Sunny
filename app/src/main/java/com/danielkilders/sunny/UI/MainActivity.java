@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String KEY = "8c490071fb00c1ea4c867e0b58cbefac";
     public static final String DAILY_FORECAST = "DAILY_FORECAST";
+    public static final String HOURLY_FORECAST = "HOURLY_FORECAST";
 
     private double latitude;
     private double longitude;
@@ -407,6 +408,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     public void startHourlyActivity(View view) {
+        Intent intent = new Intent(this, HourlyForecastActivity.class);
 
+        intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
+
+        startActivity(intent);
     }
 }
