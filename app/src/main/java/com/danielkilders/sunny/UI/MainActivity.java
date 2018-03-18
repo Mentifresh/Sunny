@@ -2,6 +2,7 @@ package com.danielkilders.sunny.UI;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -23,8 +25,11 @@ import android.widget.Toast;
 
 import com.danielkilders.sunny.R;
 import com.danielkilders.sunny.weather.Current;
+import com.danielkilders.sunny.weather.Day;
 import com.danielkilders.sunny.weather.Forecast;
+import com.danielkilders.sunny.weather.Hour;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -42,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String KEY = "8c490071fb00c1ea4c867e0b58cbefac";
+    public static final String DAILY_FORECAST = "DAILY_FORECAST";
 
     private double latitude;
     private double longitude;
@@ -58,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private TextView mTemperatureLabel, mTimeLabel, mHumidityLabel, mPrecipLabel, mSummaryLabel, mLocationLabel, mToggleUnitButton;
     private ImageView mIconImageView, mRefreshImageView;
     private ProgressBar mProgressBar;
+    private Button mhourlyButton, mDailyButton;
 
 
     @Override
@@ -75,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         mProgressBar = findViewById(R.id.progressBar);
         mLocationLabel = findViewById(R.id.locationLabel);
         mToggleUnitButton = findViewById(R.id.toggleUnit);
+        mDailyButton = findViewById(R.id.dailyButton);
+        mhourlyButton = findViewById(R.id.hourlyButton);
 
         mProgressBar.setVisibility(View.INVISIBLE);
 
@@ -186,8 +195,58 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Forecast forecast = new Forecast();
 
         forecast.setCurrent(getCurrentDetails(jsonData));
+        forecast.setHourlyForecast(getHourlyForecast(jsonData));
+        forecast.setDailyForecast(getDailyForecast(jsonData));
 
         return forecast;
+    }
+
+    private Day[] getDailyForecast(String jsonData) throws JSONException {
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+
+        JSONObject daily = forecast.getJSONObject("daily");
+        JSONArray data = daily.getJSONArray("data");
+
+        Day[] days = new Day[data.length()];
+
+        for (int i = 0; i < data.length() ; i++) {
+            JSONObject jsonDay = data.getJSONObject(i);
+            Day day = new Day();
+
+            day.setSummary(jsonDay.getString("summary"));
+            day.setTemperatureMax(jsonDay.getDouble("temperatureMax"));
+            day.setIcon(jsonDay.getString("icon"));
+            day.setTime(jsonDay.getLong("time"));
+            day.setTimeZone(timezone);
+
+            days[i] = day;
+        }
+        Log.v(TAG, "days: " + days.toString());
+        return days;
+    }
+
+    private Hour[] getHourlyForecast(String jsonData) throws JSONException {
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+        JSONObject hourly = forecast.getJSONObject("hourly");
+        JSONArray data = hourly.getJSONArray("data");
+
+        Hour[] hours = new Hour[data.length()];
+
+        for (int i = 0; i < data.length() ; i++) {
+            JSONObject jsonHour = data.getJSONObject(i);
+            Hour hour = new Hour();
+
+            hour.setSummary(jsonHour.getString("summary"));
+            hour.setTemperature(jsonHour.getDouble("temperature"));
+            hour.setIcon(jsonHour.getString("icon"));
+            hour.setTime(jsonHour.getLong("time"));
+            hour.setTimeZone(timezone);
+            hours[i] = hour;
+        }
+        Log.v(TAG, "hours: " + hours.toString());
+        return hours;
     }
 
 
@@ -337,5 +396,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private void alertUserAboutError() {
         AlertDialogFragment dialog = new AlertDialogFragment();
         dialog.show(getFragmentManager(), "error_dialog");
+    }
+
+    public void startDailyActivity(View view) {
+        Intent intent = new Intent(this, DailyForecastActivity.class);
+
+        intent.putExtra(DAILY_FORECAST, mForecast.getDailyForecast());
+
+        startActivity(intent);
+    }
+
+    public void startHourlyActivity(View view) {
+
     }
 }

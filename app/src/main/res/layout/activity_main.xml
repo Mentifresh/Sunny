@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_blue_bright"
+    android:background="@drawable/bg_gradient"
     tools:context="com.danielkilders.sunny.UI.MainActivity">
 
 
@@ -164,5 +164,41 @@
         android:layout_marginTop="5dp"
         android:text="Use ºF"
         android:textColor="#80ffffff"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true">
+
+        <Button
+            android:id="@+id/hourlyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="0dp"
+            android:background="#40ffffff"
+            android:onClick="startHourlyActivity"
+            android:layout_marginLeft="35dp"
+            android:text="Hourly"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/dailyButton"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="35dp"
+            android:layout_marginBottom="0dp"
+            android:layout_marginLeft="1dp"
+            android:background="#40ffffff"
+            android:onClick="startDailyActivity"
+            android:text="7 days"
+            android:textColor="@android:color/white"/>
+
+    </LinearLayout>
+
+
 
 </RelativeLayout>
